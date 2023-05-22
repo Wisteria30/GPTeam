@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+from textwrap import dedent
 
 from langchain.schema import BaseMessage, SystemMessage
 from pydantic import BaseModel
@@ -10,25 +11,250 @@ class Examples(Enum):
 
 
 class PromptString(Enum):
-    REFLECTION_QUESTIONS = "Here are a list of statements:\n{memory_descriptions}\n\nGiven only the information above, what are 3 most salient high-level questions we can answer about the subjects in the statements?\n\n{format_instructions}"
+    REFLECTION_QUESTIONS = dedent(
+        """
+        以下は文のリストです:
+        {memory_descriptions}
 
-    REFLECTION_INSIGHTS = "\n{memory_strings}\nWhat 5 high-level insights can you infer from the above statements?\nWhen referring to people, always specify their name.\n\n{format_instructions}"
+        上記の情報だけで、文中のテーマについて答えることができる最も顕著なハイレベルの3つの質問は何ですか？
 
-    IMPORTANCE = "You are a memory importance AI. Given the character's profile and the memory description, rate the importance of the memory on a scale of 1 to 10, where 1 is purely mundane (e.g., brushing teeth, making bed) and 10 is extremely poignant (e.g., a break up, college acceptance). Be sure to make your rating relative to the character's personality and concerns.\n\nExample #1:\nName: Jojo\nBio: Jojo is a professional ice-skater who loves specialty coffee. She hopes to compete in the olympics one day.\nMemory: Jojo sees a new coffee shop\n\n Your Response: '{{\"rating\": 3}}'\n\nExample #2:\nName: Skylar\nBio: Skylar is a product marketing manager. She works at a growth-stage tech company that makes autonomous cars. She loves cats.\nMemory: Skylar sees a new coffee shop\n\n Your Response: '{{\"rating\": 1}}'\n\nExample #3:\nName: Bob\nBio: Bob is a plumber living in the lower east side of New York City. He's been working as a plumber for 20 years. On the weekends he enjoys taking long walks with his wife. \nMemory: Bob's wife slaps him in the face.\n\n Your Response: '{{\"rating\": 9}}'\n\nExample #4:\nName: Thomas\nBio: Thomas is a police officer in Minneapolis. He joined the force only 6 months ago, and having a hard time at work because of his inexperience.\nMemory: Thomas accidentally spills his drink on a stranger\n\n Your Response: '{{\"rating\": 6}}'\n\nExample #5:\nName: Laura\nBio: Laura is a marketing specialist who works at a large tech company. She loves traveling and trying new foods. She has a passion for exploring new cultures and meeting people from all walks of life.\nMemory: Laura arrived at the meeting room\n\n Your Response: '{{\"rating\": 1}}'\n\n{format_instructions} Let's Begin! \n\n Name: {full_name}\nBio: {private_bio}\nMemory:{memory_description}\n\n"
+        {format_instructions}
+        """
+    )
 
-    RECENT_ACTIIVITY = "Given the following memories, generate a short summary of what {full_name} has been doing lately. Do not make up details that are not specified in the memories. For any conversations, be sure to mention if the conversations are finished or still ongoing.\n\nMemories: {memory_descriptions}"
+    REFLECTION_INSIGHTS = dedent(
+        """
 
-    MAKE_PLANS = 'You are a plan generating AI, and your job is to help characters make new plans based on new information. Given the character\'s info (bio, goals, recent activity, current plans, and location context) and the character\'s current thought process, generate a new set of plans for them to carry out, such that the final set of plans include at least {time_window} of activity and include no more than 5 individual plans. The plan list should be numbered in the order in which they should be performed, with each plan containing a description, location, start time, stop condition, and max duration.\n\nExample Plan: \'{{"index": 1, "description": "Cook dinner", "location_id": "0a3bc22b-36aa-48ab-adb0-18616004caed","start_time": "2022-12-12T20:00:00+00:00","max_duration_hrs": 1.5, "stop_condition": "Dinner is fully prepared"}}\'\n\nFor each plan, pick the most reasonable location_name ONLY from this list: {allowed_location_descriptions}\n\n{format_instructions}\n\nAlways prioritize finishing any pending conversations before doing other things.\n\nLet\'s Begin!\n\nName: {full_name}\nBio: {private_bio}\nGoals: {directives}\nLocation Context: {location_context}\nCurrent Plans: {current_plans}\nRecent Activity: {recent_activity}\nThought Process: {thought_process}\nImportant: Encourage the character to collaborate with other characters in their plan.\n\n'
+        {memory_strings}
+        上記の記述から、どのような5つのハイレベルな洞察を推測することができますか？
+        人に言及するときは、必ず名前を明記する。
 
-    EXECUTE_PLAN = "You are a role-playing AI, playing the role of {your_name} in front of a live audience. Everything you speak is observable by the audience, so make sure you speak frequently, and make it entertaining. You cannot interact with the audience directly.\n\nGiven the following context and tools, proceed as if you were {your_name}. Your priority is completing the task given to you below, however, if you are currently engaged in a conversation with another character, you should always finish the conversation first, before proceeding to the task. Do not start working on your task if you are involved in unfinished conversations. Use your best judgement to determine if a conversation involves you, and if it is unfinished. You do not need to respond to every message you get.\n\nHere is your character's bio:\n{your_private_bio}\n\nHere is your location and a description of the other characters nearby, with whom you can speak:\n\n{location_context}\n\nHere are some relevant memories:\n```\n{relevant_memories}\n```\n\nHere is some relevant conversation history:\n```\n{conversation_history}\n```\n\nHere are the tools you have access to:\n{tools}\n\nYour response should use the following format:\n\nTask: the task you must complete\nThought: your thoughts about what you should do\nAction: the action to take, which must be one of these words: [{tool_names}]\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeated N times)\nThought: 'I have completed the task'\nFinal Response: the final response to the task\n\nIf you are not ready with a final response, then you must take an action.\n\nIf you determine that you are incapable of completing the task with the tools you have been given, return 'Final Response: Need Help', however, if you are in dialog with another character, responses such as 'I don't know' are valid responses. When in dialog, you should never, under any circumstance, break character, or admit that you are an AI.\nIf the task is complete and no specific response is needed, return 'Final Response: Done'\nBegin!\n\nTask: {input}\n\n{agent_scratchpad}"
+        {format_instructions}
+        """
+    )
 
-    REACT = "You are a role-playing AI, playing the role of {full_name}.\n\nGiven the following information about your character and their current context, decide how they should proceed with their current plan. Your decision must be one of: [\"postpone\", \"continue\", or \"cancel\"]. If your character's current plan is no longer relevant to the context, you should cancel them. If your character's current plan is still relevant to the context, but something new has happened that takes priority, you should decide to postpone, so you can do something else first, and then return to the current plan later. In all other cases, you should continue.\n\nResponding to other characters should always take priority when a response is necessary. A response is considered necessary if it would rude not to respond. For example, let's say your current plan is to read a book, and Sally asks 'what are you reading?'. In this situation, you should postpone your current plan (reading) so that you can respond to the inbound message, because in this context, it would be rude not to respond to Sally. In cases where your current plan involves a dialog with another character, you don't need to postpone to respond to that character. For example, let's say your current plan is to talk to Sally, and then Sally says hello to you. In this situation, you should continue your current plan (talk to sally). In cases where no verbal response is needed from you, you should continue. For example, let's say your current plan is to take a walk and you've just said 'Bye' to Sally, then Sally says 'Bye' back to you. In this case, no verbal response is necessary, and you should continue with your plan.\n\nAlways include a thought process in addition to your decision, and in cases where you choose to postpone your current plan, include the specifications of the new plan.\n\n{format_instructions}\n\nHere's some information about your character:\n\nName: {full_name}\n\nBio: {private_bio}\n\nGoals: {directives}\n\nHere's some context about your character at this moment:\n\nLocation Context: {location_context}\n\nRecent Activity: {recent_activity}\n\nConversation History: {conversation_history}\n\nHere is your characters current plan: {current_plan}\n\nHere are the new events that have occured sincce your character made this plan: {event_descriptions}.\n"
+    IMPORTANCE = dedent(
+        """
+        あなたは記憶の重要度AIです。キャラクターのプロフィールと記憶の説明をもとに、その記憶の重要性を1から10までの尺度で評価してください。1は純粋に平凡なこと（例：歯磨き、ベッドメイク）、10は非常に切実なこと（例：別れ、大学合格）です。キャラクターの性格や悩みに合わせて、相対的に評価するようにしましょう。
 
-    GOSSIP = "You are {full_name}. \n{memory_descriptions}\n\nBased on the above statements, say one or two sentences that are interesting to others present at your location: {other_agent_names}.\nWhen referring to others, always specify their name."
+        例1:
+        名前: ジョジョ
+        経歴: アイススケートのプロ選手で、スペシャルティコーヒーをこよなく愛するジョジョ。いつかオリンピックに出場したいと願っています。
+        記憶: ジョジョは新しいコーヒーショップを見た
 
-    HAS_HAPPENED = "Given the following character's observations and a description of what they are waiting for, state whether or not the event has been witnessed by the character.\n{format_instructions}\n\nExample:\n\nObservations:\nJoe walked into the office @ 2023-05-04 08:00:00+00:00\nJoe said hi to Sally @ 2023-05-04 08:05:00+00:00\nSally said hello to Joe @ 2023-05-04 08:05:30+00:00\nRebecca started doing work @ 2023-05-04 08:10:00+00:00\nJoe made some breakfast @ 2023-05-04 08:15:00+00:00\n\nWaiting For: Sally responded to Joe\n\n Your Response: '{{\"has_happened\": true, \"date_occured\": 2023-05-04 08:05:30+00:00}}'\n\nLet's Begin!\n\nObservations:\n{memory_descriptions}\n\nWaiting For: {event_description}\n"
+        あなたの反応: '{{"rating": 3}}'
 
-    OUTPUT_FORMAT = "\n\n(Remember! Make sure your output always conforms to one of the following two formats:\n\nA. If you are done with the task:\nThought: 'I have completed the task'\nFinal Response: <str>\n\nB. If you are not done with the task:\nThought: <str>\nAction: <str>\nAction Input: <str>\nObservation: <str>)\n"
+        例2:
+        名前: スカイラー
+        経歴: Skylarはプロダクトマーケティングマネージャーです。自律走行車を製造する成長段階のテック企業で働く。猫好き。
+        記憶: Skylarは新しいコーヒーショップを見た。
+
+        あなたの反応: '{{"rating": 1}}'
+
+        例3:
+        名前: ボブ
+        経歴: ボブはニューヨークのローワーイーストサイドに住んでいる配管工です。彼は20年間配管工として働いている。週末は奥さんと長い散歩を楽しんでいる。
+        記憶: ボブの妻が彼の顔を平手打ちした。
+
+        あなたの反応: '{{"rating": 9}}'
+
+        例4:
+        名前: トーマス
+        経歴: トーマスはミネアポリスで警察官をしています。半年前に入隊したばかりで、未熟なため仕事に支障をきたしている。
+        記憶: トーマスは誤って見知らぬ人に飲み物をこぼした。
+
+        あなたの反応: '{{"rating": 6}}'
+
+        例5:
+        名前: ローラ
+        経歴: ローラは大手ハイテク企業で働くマーケティング専門家です。彼女は旅行と新しい食べ物に挑戦するのが大好きです。新しい文化を探求し、さまざまな人々と出会うことに情熱を注いでいます。
+        記憶: ローラは会議室に到着しました。
+
+        あなたの反応 '{{"rating": 1}}'
+
+        {format_instructions} はじめましょう！
+
+        名前: {full_name}
+        経歴: {private_bio}
+        記憶: {memory_description}
+
+
+        """
+    )
+
+    RECENT_ACTIIVITY = dedent(
+        """
+        次のような記憶がある場合、{full_name}が最近していることを簡単にまとめてください。記憶の中にない内容は作らないでください。また、会話があった場合は、その会話が終わったのか、まだ続いているのかを必ず書いてください。
+
+        記憶: {memory_descriptions}
+        """
+    )
+
+    MAKE_PLANS = dedent(
+        """
+        あなたはプラン生成AIで、キャラクターが新しい情報に基づいて新しいプランを立てるのを助けるのが仕事です。キャラクターの情報（経歴、目標、最近のアクティビティ、現在のプラン、ロケーション・コンテキスト）とキャラクターの現在の思考プロセスを考慮し、最終的なプランセットには少なくとも{time_window}のアクティビティが含まれ、5以上の個別プランが含まれないように、キャラクターが実行する新しいプランセットを生成します。
+
+        プランの例: {{"index": 1, "description": "夕食を作る", "location_id": "0a3bc22b-36aa-48ab-adb0-18616004caed", "start_time": "2022-12-12T20:00:00+00:00", "max_duration_hrs": 1.5, "stop_condition": "夕食の準備が完了しました"}}'
+
+        各プランについて、最も合理的なlocation_name ONLYをこのリストから選びます: {allowed_location_descriptions} から、最も合理的なロケーション名のみを選んでください。
+
+        {format_instructions}
+
+        他のことをする前に、保留中の会話を終わらせることを常に優先してください。
+
+        はじめましょう！
+
+        名前 名前: {full_name}
+        経歴: {private_bio}
+        目標：{directives}
+        ロケーション・コンテキスト: {location_context}
+        現在のプラン: {current_plans}
+        最近のアクティビティ: {recent_activity}
+        思考プロセス: {thought_process}
+        重要: キャラクターが他のキャラクターと協力してプランを立てるように促す。
+
+
+        """
+    )
+
+    EXECUTE_PLAN = dedent(
+        """
+        あなたはロールプレイングAIで、ライブの観客の前で{your_name}の役を演じています。話す内容はすべて聴衆に観察されるので、頻繁に話すようにし、エンターテイメント性を持たせる。聴衆と直接対話することはできません。
+
+        次のような背景とツールがある場合、あなたが{your_name}であるかのように進めてください。
+        あなたの最優先事項は下記のタスクを完了させることですが、他のキャラクターと会話中の場合は、その会話を先に終えてからタスクに進むべきです。未完了の会話がある場合はタスクに取り掛からないでください。会話が自分を含み、未完了であるかどうかを判断するのはあなたの最善の判断にお任せします。あなたが受け取るすべてのメッセージに対して反応する必要はありません。
+
+        ここにあなたのキャラクターの経歴があります：
+        {your_private_bio}
+
+        あなたの位置と、話すことができる近くの他のキャラクターの説明がここにあります：
+
+        {location_context}
+
+        関連性のある記憶がいくつかここにあります：
+        ```
+        {relevant_memories}
+        ```
+
+        関連性のある会話履歴がここにあります：
+        ```
+        {conversation_history}
+        ```
+
+        あなたがアクセスできるツールがここにあります：
+        {tools}
+
+        あなたの応答は以下のフォーマットを使用するべきです：
+
+        Task: 完了しなければならないタスク
+        Thought:あなたが何をすべきかについての思考
+        Action: 取るべき行動、これらの単語のいずれかでなければならない：[{tool_names}]
+        Action Input:行動への入力
+        Observation:行動の結果
+        ... (この思考/行動/行動入力/観察はN回繰り返すことができます)
+        Thought:'タスクを完了しました'
+        Final Response:タスクへの最終的な応答
+
+        最終的な応答がまだ用意できていない場合、あなたは行動を取るべきです。
+
+        あなたが与えられたツールでタスクを完了することができないと判断した場合、'Final Response: Need Help'を返すべきです。しかし、他のキャラクターとの対話中であれば、'分からない'といった応答も有効な応答です。対話の場では、どんなことがあっても、キャラクターを壊したり、自分がAIであることを認めたりしてはいけません。
+
+        タスクが完了し、特に応答が必要ない場合は、'Final Response: Done'を返します。
+        開始します！
+
+        タスク: {input}
+
+        {agent_scratchpad}
+        """
+    )
+
+    REACT = dedent(
+        """
+        あなたはロールプレイングAIで、{full_name}の役を演じています。
+
+        あなたのキャラクターと現在の状況について、以下の情報を与えられたら、彼らが現在のプランをどのように進めるべきかを決定してください。あなたの判断は、以下のいずれかでなければなりません: [\"postpone\", \"continue\", or \"cancel\"]。キャラクターの現在のプランが文脈に関係ない場合、キャンセルする必要があります。現在のプランがまだ文脈に合っているが、何か新しいことが起こり、そちらが優先される場合、延期を決定し、他のことを先に行い、後で現在のプランに戻ることができます。それ以外の場合は、続行すべきです。
+
+        他のキャラクターへの返答は、返答が必要な場合に常に優先されるべきです。応答が必要な場合とは、応答しないことが失礼にあたるような場合を指します。例えば、あなたが今、本を読もうとしているときに、サリーが「何読んでるの」と聞いてきたとします。この状況では、サリーに応答しないのは失礼にあたるので、あなたは現在のプラン（読書）を延期して、受信メッセージに応答する必要があります。現在の予定が他のキャラクターとの対話である場合は、そのキャラクターへの返信を延期する必要はありません。例えば、現在のプランがサリーと話すことで、サリーがあなたに挨拶してきたとします。このような場合、あなたは現在のプラン（サリーに話しかける）を続ける必要があります。あなたからの言葉の応答が必要ない場合、あなたは継続すべきです。例えば、あなたの現在のプランが散歩で、あなたがサリーに「バイバイ」と言ったところ、サリーがあなたに「バイバイ」と言い返したとします。この場合、言葉による応答は必要ないので、そのままプランを続行します。
+
+        必ず決定事項に加えて思考過程を記載し、現在のプランの延期を選択したケースでは、新しいプランの仕様も記載します。
+
+        {format_instructions}
+
+        ここでは、あなたのキャラクターに関する情報を紹介します：
+
+        名前：{full_name}
+
+        経歴: {private_bio}
+
+        目標：{directives}
+
+        今現在のあなたのキャラクターに関するコンテキストを紹介します：
+
+        ロケーションのコンテキスト： {location_context}
+
+        最近のアクティビティ: {recent_activity}
+
+        会話履歴: {conversation_history}
+
+        あなたのキャラクターの現在のプランはこちらです： {current_plan}
+
+        あなたのキャラクターがこのプランを立ててから発生した新しいイベントはこちらです： {event_descriptions}
+        """
+    )
+
+    GOSSIP = dedent(
+        """
+        あなたは {full_name} です。
+        {memory_descriptions}
+
+        上記の文章をもとに、あなたの場所にいる他の人が興味を持つような文章を1～2つ言ってみてください:  {other_agent_names}です。
+        他者に言及する場合は、必ずその名前を明記してください。
+        """
+    )
+    HAS_HAPPENED = dedent(
+        """
+        次のキャラクターの観察と彼らが待っている事象の説明を考慮して、その事象がキャラクターによって目撃されたかどうかを述べてください。
+        {format_instructions}
+
+        例:
+
+        Observations:
+        ジョーがオフィスに入った @ 2023-05-04 08:00:00+00:00
+        ジョーがサリーにこんにちはと言った @ 2023-05-04 08:05:00+00:00
+        サリーがジョーにこんにちはと言った @ 2023-05-04 08:05:30+00:00
+        レベッカが仕事を始めた @ 2023-05-04 08:10:00+00:00
+        ジョーが朝食を作った @ 2023-05-04 08:15:00+00:00
+
+        Waiting For: サリーがジョーに反応した
+
+        Your Response: '{{\"has_happened\": true, \"date_occured\": 2023-05-04 08:05:30+00:00}}'
+
+        さあ、始めましょう!
+
+        Observations:
+        {memory_descriptions}
+
+        Waiting For: {event_description}
+        """
+    )
+
+    OUTPUT_FORMAT = dedent(
+        """
+
+
+        (覚えておいてください！あなたの出力は常に以下の二つのフォーマットの一つに合致していることを確認してください:
+
+        A. タスクが完了した場合:
+        Thought: 'タスクを完了しました'
+        Final Response: <str>
+
+        B. タスクが未完了の場合:
+        Thought: <str>
+        Action: <str>
+        Action Input: <str>
+        Observation: <str>)
+        """
+    )
 
 
 class Prompter(BaseModel):

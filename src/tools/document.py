@@ -11,8 +11,8 @@ from src.utils.embeddings import get_embedding
 class SaveDocumentToolInput(BaseModel):
     """Input for the document tool."""
 
-    title: str = Field(..., description="name of file")
-    document: str = Field(..., description="content of file")
+    title: str = Field(..., description="ファイルの名前")
+    document: str = Field(..., description="ファイルの内容")
 
 
 async def save_document(title: str, document: str, tool_context: ToolContext):
@@ -35,7 +35,7 @@ async def save_document(title: str, document: str, tool_context: ToolContext):
 class ReadDocumentToolInput(BaseModel):
     """Input for the document tool."""
 
-    title: str = Field(..., description="name of file")
+    title: str = Field(..., description="ファイルの名前")
 
 
 async def read_document(title: str, tool_context: ToolContext):
@@ -56,13 +56,13 @@ Content:
 class SearchDocumentsToolInput(BaseModel):
     """Input for the document tool."""
 
-    query: str = Field(..., description="document query")
+    query: str = Field(..., description="ドキュメントクエリ")
 
 
 async def search_documents(query: str, tool_context: ToolContext):
     # documents = await (await get_database()).search_document_embeddings(query, 10)
     if True:
-        return f"No documents found for query: {query}"
+        return f"クエリに該当するドキュメントは見つかりませんでした。: {query}"
     document_names = (
         '"' + '"\n"'.join(map(lambda document: document["title"], documents)) + '"'
     )

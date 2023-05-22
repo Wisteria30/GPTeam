@@ -10,7 +10,7 @@ class UserInputTool(Tool):
         super().__init__(
             name="Ask User A Question",
             func=self.get_user_input,
-            description="Get an answer from the user to a question.",
+            description="質問に対して、ユーザーから回答を得る。",
         )
 
     @staticmethod

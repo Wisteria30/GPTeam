@@ -5,8 +5,8 @@ from uuid import UUID, uuid4
 
 import pytz
 from pydantic import BaseModel, Field, validator
-from src.utils.database.base import Tables
 
+from src.utils.database.base import Tables
 from src.utils.database.client import get_database
 
 from ..location.base import Location
@@ -115,23 +115,19 @@ class SinglePlan(BaseModel):
         return row
 
     def make_plan_prompt(self):
-        return f"\nDo this: {self.description}\nAt this location: {self.location.name}\nStop when this happens: {self.stop_condition}\nIf do not finish within {self.max_duration_hrs} hours, stop."
+        return f"\nこれをやってください: {self.description}\nこの場所で: {self.location.name}\nこれが起こったら止めてください: {self.stop_condition}\n{self.max_duration_hrs} 時間以内に終わらなかったら、停止してください。"
 
 
 class LLMSinglePlan(BaseModel):
     index: int = Field(description="The plan number")
-    description: str = Field(description="A description of the plan")
-    start_time: datetime = Field(description="The starting time, in UTC, of the plan")
-    stop_condition: str = Field(
-        description="The condition that will cause this plan to be completed"
-    )
-    max_duration_hrs: float = Field(
-        description="The maximum amount of time to spend on this activity before reassessing"
-    )
+    description: str = Field(description="プランの説明")
+    start_time: datetime = Field(description="プランの開始時間 (UTC)")
+    stop_condition: str = Field(description="このプランが完了する条件")
+    max_duration_hrs: float = Field(description="再評価する前にこの活動に費やすべき最大限の時間")
     location_id: Optional[UUID] = Field(
-        description="Optional. The id of the location if known. If included, it must be a valid UUID from the available locations."
+        description="オプション。既知の場合、ロケーションのID。含まれている場合は、利用可能なロケーションの中から有効なUUIDでなければならない。"
     )
 
 
 class LLMPlanResponse(BaseModel):
-    plans: list[LLMSinglePlan] = Field(description="A numbered list of plans")
+    plans: list[LLMSinglePlan] = Field(description="プランの番号付きリスト")

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, validator
 
 
 class ImportanceRatingResponse(BaseModel):
-    rating: int = Field(description="Importance integer from 1 to 10")
+    rating: int = Field(description="重要度 1 ~ 10 の整数値")
 
     @validator("rating")
     def validate_cron_jobs(cls, rating):

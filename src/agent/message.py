@@ -215,8 +215,8 @@ class AgentMessage(BaseModel):
 
 
 class LLMMessageResponse(BaseModel):
-    to: str = Field(description="The recipient of the message")
-    content: str = Field(description="The content of the message")
+    to: str = Field(description="メッセージの受信者")
+    content: str = Field(description="メッセージの内容")
 
 
 def get_latest_messages(messages: list[AgentMessage]) -> list[AgentMessage]:

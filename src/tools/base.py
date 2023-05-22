@@ -180,7 +180,7 @@ def get_tools(
         ToolName.SEARCH: CustomTool(
             name=ToolName.SEARCH.value,
             func=SerpAPIWrapper().run,
-            description="search the web for information. input should be the search query.",
+            description="ウェブで情報を検索する。入力は検索クエリであるべきだ。",
             coroutine=SerpAPIWrapper().arun,
             tool_usage_summarization_prompt="You have just searched Google with the following search input: {tool_input} and got the following result {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
             tool_usage_description="To make progress on their plans, {agent_full_name} searched Google and realised the following: {tool_usage_reflection}.",
@@ -194,8 +194,8 @@ def get_tools(
             name=ToolName.SPEAK.value,
             func=send_message_sync,
             coroutine=send_message_async,
-            description=f'say something in the {location_name}. The following people are also in the {location_name} and are the only people who will hear what you say: [{other_agent_names}] You can say something to everyone in the {location_name}, or address a specific person at your location. Input should be a json string with two keys: "recipient" and "message". The value of "recipient" should be a string of the recipients name or "everyone" if speaking to everyone, and the value of "message" should be a string. If you are waiting for a response, just keep using the \'wait\' tool. Example input: {{"recipient": "Jonathan", "message": "Hello Jonathan! 😄"}}',
-            tool_usage_description="To make progress on their plans, {agent_full_name} spoke to {recipient_full_name}.",
+            description=f'{location_name} の中で何か言ってください。次の人も{location_name}の中にいて、あなたの発言を聞くことができる唯一の人たちです: [{other_agent_names}] {location_name}にいる全員に対して何かを言うこともできますし、あなたの場所にいる特定の人に向けて言うこともできます。入力は、2つのキーを持つjson文字列でなければなりません: "recipient"と "message"。"recipient"の値には、受信者の名前の文字列、または全員に話しかける場合は "everyone"、"message "の値には、文字列を指定します。返信を待っている場合は、そのまま\'wait\'ツールを使ってください。入力例: {{"recipient": "Jonathan", "message": "Hello Jonathan! 😄"}}',
+            tool_usage_description="プランを進展させるために、{agent_full_name}は{recipient_full_name}に話を聞きました。",
             requires_context=True,
             args_schema=SpeakToolInput,
             requires_authorization=False,
@@ -205,8 +205,8 @@ def get_tools(
             name=ToolName.WAIT.value,
             func=wait_sync,
             coroutine=wait_async,
-            description="Useful for when you are waiting for something to happen. Input a very detailed description of what exactly you are waiting for. Start your input with 'I am waiting for...' (e.g. I am waiting for any type of meeting to start in the conference room).",
-            tool_usage_description="{agent_full_name} is waiting.",
+            description="何かを待っているときに便利です。具体的に何を待っているのか、とても詳しく入力してください。「私は…を待っている」（例：会議室でどんな種類の会議が始まるか待っている）で入力を始める。",
+            tool_usage_description="{agent_full_name} は待っている。",
             requires_context=True,
             requires_authorization=False,
             worldwide=True,
@@ -228,12 +228,12 @@ def get_tools(
             func=ask_human,
             coroutine=ask_human_async,
             description=(
-                "You can ask a human for guidance when you think you "
-                "got stuck or you are not sure what to do next. "
-                "The input should be a question for the human."
+                "困ったとき、どうしたらいいのかわからないとき、人間に助けを求めることができる "
+                "はまってしまったり、次に何をすればいいのかわからなくなったりしたときに、人間に指導を求めることができます。 "
+                "入力は、人間に対する質問でなければなりません。"
             ),
-            tool_usage_summarization_prompt="You have just asked a human for help by saying {tool_input}. This is what they replied: {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} spoke to a human.",
+            tool_usage_summarization_prompt="あなたは今、{tool_input} と言って人間に助けを求めました。これは彼らが答えたものです: {tool_result}。その結果があなたの計画を達成するためにどのように役立つかについて、役に立つ情報を一文で書いてください: {plan_description}",
+            tool_usage_description="計画を進展させるため、{agent_full_name}は人間に話しかけました。",
             requires_context=True,
             requires_authorization=False,
             worldwide=True,
@@ -241,9 +241,9 @@ def get_tools(
         ToolName.COMPANY_DIRECTORY: CustomTool(
             name=ToolName.COMPANY_DIRECTORY.value,
             func=consult_directory,
-            description="A directory of all the people you can speak with, detailing their names and bios. Useful for when you need help from another person. Takes an empty string as input.",
-            tool_usage_summarization_prompt="You have just consulted the company directory and found out the following: {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} consulted the company directory and realised the following: {tool_usage_reflection}.",
+            description="あなたが話すことができるすべての人のディレクトリは、名前と経歴を詳述しています。他の人の助けが必要なときに便利です。入力として空の文字列を受け取ります。",
+            tool_usage_summarization_prompt="あなたは今、会社のディレクトリを参照し、次のことを知りました: {tool_result}。その結果があなたの計画を達成するためにどのように役立つかについて、有用な情報を1文にまとめて書きなさい: {plan_description}とします。",
+            tool_usage_description="計画を進めるために、{agent_full_name}は会社案内を参照し、以下のことに気づいた:  {tool_usage_reflection}",
             requires_context=True,  # this tool requires location_id as context
             requires_authorization=False,
             worldwide=True,
@@ -251,8 +251,8 @@ def get_tools(
         ToolName.SAVE_DOCUMENT: CustomTool(
             name=ToolName.SAVE_DOCUMENT.value,
             coroutine=save_document,
-            description="""Write text to an existing document or create a new one. Useful for when you need to save a document for later use. Input should be a json string with two keys: "title" and "document". The value of "title" should be a string, and the value of "document" should be a string.""",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} saved a document.",
+            description="""既存の文書にテキストを書き込んだり、新規に作成したりすることができます。後で使うためにドキュメントを保存する必要がある場合に便利です。入力は、2つのキーを持つjson文字列でなければなりません: "title"と "document"。title"の値は文字列、"document"の値は文字列でなければならない。""",
+            tool_usage_description="計画を進めるために、{agent_full_name}はドキュメントを保存しました。",
             requires_context=True,  # this tool requires document_name and content as context
             args_schema=SaveDocumentToolInput,
             requires_authorization=False,
@@ -261,9 +261,9 @@ def get_tools(
         ToolName.READ_DOCUMENT: CustomTool(
             name=ToolName.READ_DOCUMENT.value,
             coroutine=read_document,
-            description="""Read text from an existing document. Useful for when you need to read a document that you have saved.
-Input should be a json string with one key: "title". The value of "title" should be a string.""",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} read a document.",
+            description="""既存の文書からテキストを読み取る。保存したドキュメントを読む必要があるときに便利です。
+入力は、"title"をキーとするjson文字列である必要があります。title"の値は文字列である必要があります。""",
+            tool_usage_description="計画を進めるために、{agent_full_name}はドキュメントを読みました。",
             requires_context=True,  # this tool requires document_name and content as context
             args_schema=ReadDocumentToolInput,
             requires_authorization=False,
@@ -272,9 +272,9 @@ Input should be a json string with one key: "title". The value of "title" should
         ToolName.SEARCH_DOCUMENTS: CustomTool(
             name=ToolName.SEARCH_DOCUMENTS.value,
             coroutine=search_documents,
-            description="""Search previously saved documents. Useful for when you need to read a document who's exact name you forgot.
-Input should be a json string with one key: "query". The value of "query" should be a string.""",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} searched documents.",
+            description="""過去に保存した文書を検索することができます。名前を忘れてしまった文書を読むときに便利です。
+入力は、"query "をキーとするjson文字列である必要があります。query "の値は文字列である必要があります。""",
+            tool_usage_description="計画を進めるために、{agent_full_name}は資料を探しました。",
             requires_context=True,  # this tool requires document_name and content as context
             args_schema=SearchDocumentsToolInput,
             requires_authorization=False,

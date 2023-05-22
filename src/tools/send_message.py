@@ -20,8 +20,8 @@ load_dotenv()
 class SpeakToolInput(BaseModel):
     """Input for the document tool."""
 
-    recipient: str = Field(..., description="recipient of message")
-    message: str = Field(..., description="content of message")
+    recipient: str = Field(..., description="メッセージの受信者")
+    message: str = Field(..., description="メッセージの内容")
 
 
 async def send_message_async(recipient: str, message: str, tool_context: ToolContext):

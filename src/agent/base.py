@@ -328,7 +328,7 @@ class Agent(BaseModel):
         await (await get_database()).insert(Tables.Memories, memory.db_dict())
 
         if log:
-            self._log("New Memory", f"{memory}")
+            self._log("新しい記憶", f"{memory}")
 
         return memory
 
@@ -489,13 +489,13 @@ class Agent(BaseModel):
         old_location = self.location
 
         self._log(
-            "Moved Location",
+            "ロケーションの移動",
             f"{self.location.name} -> {location.name} @ {datetime.now(pytz.utc).strftime('%H:%M:%S')}",
         )
 
         departure_event = Event(
             type=EventType.NON_MESSAGE,
-            description=f"{self.full_name} left the {old_location.name}",
+            description=f"{self.full_name} が {old_location.name} を離れました。",
             location_id=old_location.id,
             agent_id=self.id,
             timestamp=datetime.now(pytz.utc),
@@ -503,7 +503,7 @@ class Agent(BaseModel):
 
         arrival_event = Event(
             type=EventType.NON_MESSAGE,
-            description=f"{self.full_name} arrived at the {location.name}",
+            description=f"{self.full_name} が {location.name} に到着しました。",
             location_id=location.id,
             agent_id=self.id,
             timestamp=datetime.now(pytz.utc),
@@ -532,7 +532,7 @@ class Agent(BaseModel):
             reverse=True,
         )[:REFLECTION_MEMORY_COUNT]
 
-        self._log("Reflection", "Beginning reflection... 🤔")
+        self._log("Reflection(自己言及)", "自己言及を開始しました... 🤔")
 
         # Set up a complex chat model
         chat_llm = ChatModel(DEFAULT_SMART_MODEL, temperature=0)
@@ -580,7 +580,7 @@ class Agent(BaseModel):
                 llm=chat_llm.defaultModel,
             )
 
-            self._log("Reflecting on Question", f"{question}")
+            self._log("質問を振り返っている", f"{question}")
 
             # Make the reflection prompter
             reflection_prompter = Prompter(
@@ -644,11 +644,11 @@ class Agent(BaseModel):
 
         response = await chat_llm.get_chat_completion(
             gossip_prompter.prompt,
-            loading_text="🤔 Creating gossip...",
+            loading_text="🤔 うわさ話を生成中...",
         )
 
         self._log(
-            "Gossip",
+            "うわさ話",
             f"{response}",
         )
 
@@ -656,7 +656,7 @@ class Agent(BaseModel):
             agent_id=self.id,
             type=EventType.MESSAGE,
             subtype=MessageEventSubtype.AGENT_TO_AGENT,
-            description=f"{self.full_name} said to everyone in the {self.location.name}: '{response}'",
+            description=f"{self.full_name} が {self.location.name} の場所で全員に向けて発言した: '{response}'",
             location_id=self.location.id,
         )
 
@@ -669,7 +669,7 @@ class Agent(BaseModel):
             location_context (str): A description of the current location and list of the other agents in this location
         """
 
-        self._log("Starting to Plan", "📝")
+        self._log("プランを開始しました。", "📝")
 
         low_temp_llm = ChatModel(DEFAULT_SMART_MODEL, temperature=0, streaming=True)
 
@@ -689,7 +689,7 @@ class Agent(BaseModel):
         else:
             recent_activity = self.recent_activity
 
-        self._log("Recent Activity Summary", recent_activity)
+        self._log("最近の活動まとめ", recent_activity)
 
         # Make the Plan prompter
         plan_prompter = Prompter(
@@ -734,8 +734,8 @@ class Agent(BaseModel):
 
         if invalid_locations:
             self._log(
-                "Invalid Locations in Plan",
-                f"The following locations are invalid: {invalid_locations}",
+                "プランの無効な場所",
+                f"以下のロケーションは無効です: {invalid_locations}",
             )
 
             # Get the plans
@@ -744,10 +744,10 @@ class Agent(BaseModel):
                 + [
                     AIMessage(content=response),
                     HumanMessage(
-                        content=f"Your response included the following invalid location_ids: {invalid_locations}. Please try again."
+                        content=f"あなたの応答には、以下の無効なlocation_idsが含まれていました:  {invalid_locations}。もう一度やり直してください。"
                     ),
                 ],
-                loading_text="🤔 Correcting plans...",
+                loading_text="🤔 プランの修正中...。",
             )
 
             # Parse the response into an object
@@ -788,8 +788,8 @@ class Agent(BaseModel):
         # Loop through each plan and print it to the console
         for index, plan in enumerate(new_plans):
             self._log(
-                "New Plan",
-                f"#{index}: {plan.description} @ {plan.location.name} (<{plan.max_duration_hrs} hrs) [Stop Condition: {plan.stop_condition}]",
+                "新しいプラン",
+                f"#{index}: {plan.description} @ {plan.location.name} (<{plan.max_duration_hrs} hrs) [停止条件: {plan.stop_condition}]",
             )
 
         return new_plans
@@ -797,7 +797,7 @@ class Agent(BaseModel):
     async def _react(self, events: list[Event]) -> LLMReactionResponse:
         """Get the recent activity and decide whether to replan to carry on"""
 
-        self._log("React", "Deciding how to react to recent events...")
+        self._log("React", "最近の出来事にどう反応するか決める...")
 
         # LLM call to decide how to react to new events
         # Make the reaction parser
@@ -846,8 +846,8 @@ class Agent(BaseModel):
         parsed_reaction_response: LLMReactionResponse = reaction_parser.parse(response)
 
         self._log(
-            "Reaction",
-            f"Decided to {parsed_reaction_response.reaction.value} the current plan: {parsed_reaction_response.thought_process}",
+            "リアクション",
+            f"現在のプラン: {parsed_reaction_response.thought_process} から {parsed_reaction_response.reaction.value} することに決めました。",
         )
 
         self.context.update_agent(self._db_dict())
@@ -861,10 +861,14 @@ class Agent(BaseModel):
     ) -> PlanStatus:
         """Act on a plan"""
 
-        self._log("Act", "Starting to act on plan.")
+        self._log("実行", "計画通りに行動し始めた。")
 
         # If we are not in the right location, move to the new location
-        if (hasattr(plan, 'location') and plan.location and self.location.id != plan.location.id):
+        if (
+            hasattr(plan, "location")
+            and plan.location
+            and self.location.id != plan.location.id
+        ):
             await self._move_to_location(plan.location)
 
         # Observe and react to new events
@@ -893,8 +897,8 @@ class Agent(BaseModel):
         # IF the plan failed
         if resp.status == PlanStatus.FAILED:
             self._log(
-                "Action Failed",
-                f"{plan.description} Error: {resp.output}",
+                "アクションに失敗",
+                f"{plan.description} エラー: {resp.output}",
             )
 
             # update the plan in the local agent object
@@ -912,7 +916,7 @@ class Agent(BaseModel):
                 agent_id=self.id,
                 timestamp=datetime.now(pytz.utc),
                 type=EventType.NON_MESSAGE,
-                description=f"{self.full_name} has failed to complete the following: {plan.description} at the location: {plan.location.name}. {self.full_name} had the following problem: {resp.output}.",
+                description=f"{self.full_name}はロケーション: {plan.location.name} で以下を完了するのに失敗しました: {plan.description} 。{self.full_name}には次の問題がありました: {resp.output}.",
                 location_id=self.location.id,
             )
 
@@ -920,7 +924,7 @@ class Agent(BaseModel):
 
         # If the plan is in progress
         elif resp.status == PlanStatus.IN_PROGRESS:
-            self._log("Action In Progress", f"{plan.description}")
+            self._log("アクションの進捗状況", f"{plan.description}")
 
             # update the plan in the local agent object
             plan.scratchpad = resp.scratchpad
@@ -941,7 +945,7 @@ class Agent(BaseModel):
 
         # If the plan is done, remove it from the list of plans
         elif resp.status == PlanStatus.DONE:
-            self._log("Action Completed", f"{plan.description}")
+            self._log("アクション完了", f"{plan.description}")
 
             # update the plan in the local agent object
             plan.completed_at = datetime.now(pytz.utc)
@@ -985,8 +989,8 @@ class Agent(BaseModel):
         )
 
         self._log(
-            "Observe",
-            f"Observed {len(events)} new events since {last_checked_events.strftime('%H:%M:%S')}",
+            "観測",
+            f"{last_checked_events.strftime('%H:%M:%S')} 以降、{len(events)} 件の新規イベントを観測しました。",
         )
 
         if len(events) > 0:

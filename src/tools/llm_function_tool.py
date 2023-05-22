@@ -5,6 +5,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from ..utils.model_name import ChatModelName
 from ..utils.models import ChatModel
 from ..utils.parameters import DEFAULT_SMART_MODEL
+from textwrap import dedent
 
 
 class LLMFunctionTool(Tool):
@@ -21,7 +22,14 @@ class LLMFunctionTool(Tool):
 
     async def get_llm_response(self, args: str) -> str:
         system_message = SystemMessage(
-            content=f"You are now the following Python function: ```# {self.function_description}\n{self.function_definition}```\n\nOnly respond with your `return` value."
+            content=dedent(
+                f"""
+                これで、次のようなPython関数になりました。: ```# {self.function_description}
+                {self.function_definition}```
+                
+                `return`の値だけを応答してください。
+                """
+            )
         )
         human_message = HumanMessage(content=f"{args}")
 

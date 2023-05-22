@@ -11,9 +11,9 @@ from ..utils.parameters import DEFAULT_FAST_MODEL, DEFAULT_SMART_MODEL
 
 
 class HasHappenedLLMResponse(BaseModel):
-    has_happened: bool = Field(description="Whether the event has happened or not")
+    has_happened: bool = Field(description="イベントが起こったかどうか")
     date_occured: str = Field(
-        description="The date and time the event occured, in this format: %Y-%m-%d %H:%M:%S"
+        description="イベントが発生した日付と時刻。この形式は次のとおりです: %Y-%m-%d %H:%M:%S"
     )
 
 
@@ -49,9 +49,9 @@ async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
     parsed_response: HasHappenedLLMResponse = parser.parse(response)
 
     if parsed_response.has_happened:
-        return f"The event I was waiting for occured at {parsed_response.date_occured}. No need to wait anymore."
+        return f"私が待っていたイベントは{parsed_response.date_occured}で発生しました。もう待つ必要はありません。"
     else:
-        return "The event I was waiting for has not happened yet. Waiting..."
+        return "待ち望んでいた出来事は、まだ起きていない。待っている..."
 
 
 def wait_sync(agent_input: str, tool_context: ToolContext) -> str:

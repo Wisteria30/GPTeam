@@ -1,0 +1,38 @@
+{
+	"name": "gpteam",
+	"dockerComposeFile": [
+		"../docker-compose.yml"
+	],
+	"service": "gpteam",
+	"workspaceFolder": "/app",
+	"extensions": [
+		"visualstudioexptteam.vscodeintellicode",
+		"github.copilot",
+		"eamodio.gitlens",
+		"mhutchie.git-graph",
+		"usernamehw.errorlens",
+		"ms-ceintl.vscode-language-pack-ja",
+		"monokai.theme-monokai-pro-vscode",
+		"oderwat.indent-rainbow",
+		"shardulm94.trailing-spaces",
+		"coenraads.bracket-pair-colorizer-2",
+		"mechatroner.rainbow-csv",
+		"redhat.vscode-yaml",
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"ms-python.flake8",
+		"ms-python.black-formatter",
+		"ms-python.isort",
+		"ms-python.mypy-type-checker",
+		"ms-toolsai.jupyter",
+		"bungcip.better-toml"
+	]
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	// Uncomment the next line if you want start specific services in your Docker Compose config.
+	// "runServices": [],
+	// Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+	// "shutdownAction": "none",
+	// Uncomment the next line to run commands after the container is created - for example installing curl.
+	// "postCreateCommand": "apt-get update && apt-get install -y curl",
+}

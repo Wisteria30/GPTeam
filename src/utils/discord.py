@@ -138,7 +138,7 @@ def discord_listener():
                     "timestamp": event.message.timestamp,
                     "type": "message",
                     "subtype": "human-agent-reply",
-                    "description": f'{event.message.author.username}#{event.message.author.discriminator} (human) replied to question "{question}": {event.message.content}',
+                    "description": f'{event.message.author.username}#{event.message.author.discriminator} (人間) が質問に回答しました "{question}": {event.message.content}',
                     "location_id": str(location.id),
                     "metadata": {
                         "discord_id": str(event.message.id),
@@ -155,7 +155,7 @@ def discord_listener():
                 "timestamp": event.message.timestamp,
                 "type": "message",
                 "subtype": "human-in-channel",
-                "description": f"{event.message.author.username}#{event.message.author.discriminator} said: {event.message.content}",
+                "description": f"{event.message.author.username}#{event.message.author.discriminator} 言いました: {event.message.content}",
                 "location_id": str(location.id),
                 "metadata": {
                     "discord_id": str(event.message.id),

@@ -38,7 +38,7 @@ async def run_world_async():
         world = await World.from_id(worlds[-1]["id"])
 
         print_to_console(
-            f"Welcome to {world.name}!",
+            f"{world.name}へようこそ！",
             LogColor.ANNOUNCEMENT,
             "\n",
         )

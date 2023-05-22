@@ -9,5 +9,5 @@ class SearchTool(Tool):
         super().__init__(
             name="Current Search",
             func=search.run,
-            description="useful for when you need to answer questions about current events or the current state of the world. the input to this should be a single search term.",
+            description="時事問題や世界の現状についての質問に答える必要があるときに便利です。この入力は、単一の検索語でなければなりません。",
         )
